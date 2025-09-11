@@ -6,7 +6,7 @@ personal projects. Eventually I'd like to create my own website, making the fron
 
 
 Notes:
-At one point I had divergent branches, so I had to run {git config pull.rebase false} to let vscode know to merge the branches.
+At one point I had divergent branches, so I had to run `git config pull.rebase false` to let vscode know to merge the branches.
 Could've decided to rebase branches too by making it true, but merging seems to be safer.
 
 My code originally wouldn't pop up a window when I tried to, and it turned out to be because I was in a codespace and the file wasn;t running locally so there wasn't a virtual environment to support it.
