@@ -1,7 +1,14 @@
+
+
 # This will hopefully be my first decent program
 # The goal is to scrape the data from vt's gym website to create a graph of how busy the gyms are at different times of the day
 # This project is hopefully going to be a good introduction to webscraping and data visualization
 # important: ctrl + c stops program while running
+
+# very important, I used github copilot AI for a large majority of the busy work in this program,
+# such as storing and graphing the data once I've scraped it from the vt website
+# I will go through every single line and comment in my own words what it does to prove I
+# understand and can explain it
 
 from urllib.request import urlopen # imports the library we're going to use to webscrap
 import re # a useful module, regular expressions
@@ -9,6 +16,7 @@ import re # a useful module, regular expressions
 
 import matplotlib.pyplot as plt # both of these are graph imports
 import numpy as np
+plt.close('all')  # Close any existing figures to prevent extra windows
 
 import time # used to get the current time so I can math the data input with a certain time on the graph
 from datetime import datetime
@@ -24,6 +32,11 @@ import os # makes it so the program can interact with my operating system, ie ad
 DATA_FILE = "gym_times_data.pkl" # Name of the file to store persistent data
 war_data_by_time = defaultdict(list)  # {time_slot: [values]} for War Memorial
 mc_data_by_time = defaultdict(list)  # {time_slot: [values]} for McComas
+
+
+# Can be used to clear the pickle file to start fresh, take out comment to run
+#if os.path.exists(DATA_FILE):
+#	os.remove(DATA_FILE)  # Delete the file if it exists
 
 # Load previous data if it exists
 if os.path.exists(DATA_FILE): # checks to see if a data file exists
@@ -42,10 +55,20 @@ def scrape_occupancy():
 	mc = int(results[3][19] + results[3][20]) # Extract McComas occupancy
 	return war, mc # Return both values
 
-# Set up x-axis: 6am to 10pm with 4 even intervals
 
-x_labels = ["6am", "10am", "2pm", "6pm", "10pm"] # X-axis labels for McComas
-x = np.linspace(6, 22, 5)  # X-axis tick positions for McComas (6am to 10pm)
+# Detect if today is a weekend
+today = datetime.now().weekday()  # 0=Monday, 6=Sunday
+is_weekend = today >= 5  # Saturday or Sunday
+
+# Set up x-axis and tick labels depending on weekend/weekday
+if is_weekend:
+	# Weekend: McComas 8am-8pm, WMH 10am-10pm
+	x_labels = ["8am", "10am", "12pm", "2pm", "4pm", "6pm", "8pm"]
+	x = np.arange(8, 21, 2)  # 8am to 8pm, every 2 hours
+else:
+	# Weekday: McComas 6am-10pm, WMH 5am-11pm
+	x_labels = ["6am", "8am", "10am", "12pm", "2pm", "4pm", "6pm", "8pm", "10pm"]
+	x = np.arange(6, 23, 2)  # 6am to 10pm, every 2 hours
 
 # Set up y-axis: 0% to 100% with 4 even intervals
 
@@ -67,8 +90,8 @@ def update_plots():
 		mc_times = sorted(mc_data_by_time.keys())
 		mc_avgs = [sum(mc_data_by_time[t])/len(mc_data_by_time[t]) for t in mc_times]
 		ax1.plot(mc_times, mc_avgs, 'ro-', label='McComas (avg)')  # Plot average McComas data
-	ax1.set_xticks(x)  # Set x-axis tick positions
-	ax1.set_xticklabels(x_labels)  # Set x-axis tick labels
+	ax1.set_xticks(x)  # Set x-axis tick positions (more ticks)
+	ax1.set_xticklabels(x_labels)  # Set x-axis tick labels (more labels)
 	ax1.set_yticks(y)  # Set y-axis tick positions
 	ax1.set_yticklabels(y_labels)  # Set y-axis tick labels
 	ax1.set_xlim(6, 22)  # Set x-axis limits
@@ -82,10 +105,17 @@ def update_plots():
 		war_times = sorted(war_data_by_time.keys())
 		war_avgs = [sum(war_data_by_time[t])/len(war_data_by_time[t]) for t in war_times]
 		ax2.plot(war_times, war_avgs, 'bo-', label='War Memorial (avg)')  # Plot average War Memorial data
-	x2_labels = ["5am", "9am", "1pm", "5pm", "9pm", "11pm"]  # X-axis labels for second plot
-	x2 = np.linspace(5, 23, 6)  # X-axis tick positions for second plot
+	# Set x-axis for War Memorial depending on weekend/weekday
+	if is_weekend:
+		x2_labels = ["10am", "12pm", "2pm", "4pm", "6pm", "8pm", "10pm"]
+		x2 = np.arange(10, 23, 2)  # 10am to 10pm, every 2 hours
+		ax2.set_xlim(10, 22)
+	else:
+		x2_labels = ["5am", "7am", "9am", "11am", "1pm", "3pm", "5pm", "7pm", "9pm", "11pm"]
+		x2 = np.arange(5, 24, 2)  # 5am to 11pm, every 2 hours
+		ax2.set_xlim(5, 23)
 	ax2.set_xticks(x2)  # Set x-axis tick positions
-	ax2.set_xticklabels(x2_labels)  # Set x-axis tick labels
+	ax2.set_xticklabels(x2_labels)  # Set x-axis tick labels and rotate
 	ax2.set_yticks(y)  # Set y-axis tick positions
 	ax2.set_yticklabels(y_labels)  # Set y-axis tick labels
 	ax2.set_xlim(5, 23)  # Set x-axis limits
@@ -103,24 +133,31 @@ def update_plots():
 
 def get_time_slot():
 	now = datetime.now()
-	# Round to nearest 15 minutes (0.25 hour)
-	slot = now.hour + round(now.minute/15)*0.25
+	# Round to nearest 5 minutes (0.0833 hour)
+	slot = now.hour + round(now.minute/5)*(5/60)
 	return slot
 
-# using a try except statement so if I exit the program with ctrl + c the data will be saved
+
+
+def collect_and_update():
+	slot = get_time_slot()
+	war, mc = scrape_occupancy()
+	war_data_by_time[slot].append(war)
+	mc_data_by_time[slot].append(mc)
+	update_plots()
+	# Save data after each update
+	with open(DATA_FILE, "wb") as f:
+		pickle.dump({"war": dict(war_data_by_time), "mc": dict(mc_data_by_time)}, f)
+	# Schedule the next update in 5 minutes (300,000 ms)
+	timer = fig.canvas.new_timer(interval=300000)
+	timer.add_callback(collect_and_update)
+	timer.start()
+
+# Start the first update
+collect_and_update()
+
 try:
-	while True:
-		now = datetime.now()
-		hour_decimal = now.hour + now.minute/60
-		slot = get_time_slot()
-		war, mc = scrape_occupancy()
-		war_data_by_time[slot].append(war)
-		mc_data_by_time[slot].append(mc)
-		update_plots()
-		# Save data after each update
-		with open(DATA_FILE, "wb") as f:
-			pickle.dump({"war": dict(war_data_by_time), "mc": dict(mc_data_by_time)}, f)
-		time.sleep(900)  # Wait 15 minutes
+	plt.show()
 except KeyboardInterrupt:
 	# Save data one last time on exit
 	with open(DATA_FILE, "wb") as f:
