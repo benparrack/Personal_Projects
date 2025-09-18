@@ -10,10 +10,13 @@
 # I will go through every single line and comment in my own words what it does to prove I
 # understand and can explain it
 
+
 from urllib.request import urlopen # imports the library we're going to use to webscrap
 import re # a useful module, regular expressions
 
-
+# Use non-interactive backend for matplotlib
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt # both of these are graph imports
 import numpy as np
 plt.close('all')  # Close any existing figures to prevent extra windows
@@ -51,8 +54,14 @@ def scrape_occupancy():
 	html_bytes = page.read() # Read HTML content
 	html = html_bytes.decode("utf-8") # Decode bytes to string
 	results = (re.findall("Current Occupancy: ..", html)) # finds all instances of current occupancy: the two periods can act as any character
-	war = int(results[0][19] + results[0][20]) # Extract War Memorial occupancy
-	mc = int(results[3][19] + results[3][20]) # Extract McComas occupancy
+	if results[0][20] == '%': # have to do these if statements because at 0% occupancy there is only 1 int, not two
+		war = 00
+	else:
+		war = int(results[0][19] + results[0][20]) # Extract War Memorial occupancy
+	if results[3][20] == '%':
+		mc = 00
+	else:
+		mc = int(results[3][19] + results[3][20]) # Extract McComas occupancy
 	return war, mc # Return both values
 
 
@@ -125,8 +134,7 @@ def update_plots():
 	ax2.set_title("War Memorial Gym Occupancy (Averaged)")  # Set plot title
 	ax2.grid(True, which='both', axis='both', linestyle='--', alpha=0.5)  # Add grid lines
 	plt.tight_layout()  # Adjust layout to prevent overlap
-	plt.draw()  # Redraw the current figure with updates
-	plt.pause(0.1)  # Pause to allow the plot window to update
+	plt.savefig('gym_occupancy.png')  # Save the current figure to a file
 
 
 
@@ -139,25 +147,19 @@ def get_time_slot():
 
 
 
-def collect_and_update():
-	slot = get_time_slot()
-	war, mc = scrape_occupancy()
-	war_data_by_time[slot].append(war)
-	mc_data_by_time[slot].append(mc)
-	update_plots()
-	# Save data after each update
-	with open(DATA_FILE, "wb") as f:
-		pickle.dump({"war": dict(war_data_by_time), "mc": dict(mc_data_by_time)}, f)
-	# Schedule the next update in 5 minutes (300,000 ms)
-	timer = fig.canvas.new_timer(interval=300000)
-	timer.add_callback(collect_and_update)
-	timer.start()
 
-# Start the first update
-collect_and_update()
-
+# Main loop: run every 5 minutes, save PNG, handle Ctrl+C
 try:
-	plt.show()
+	while True:
+		slot = get_time_slot()
+		war, mc = scrape_occupancy()
+		war_data_by_time[slot].append(war)
+		mc_data_by_time[slot].append(mc)
+		update_plots()
+		# Save data after each update
+		with open(DATA_FILE, "wb") as f:
+			pickle.dump({"war": dict(war_data_by_time), "mc": dict(mc_data_by_time)}, f)
+		time.sleep(300)  # Sleep for 5 minutes
 except KeyboardInterrupt:
 	# Save data one last time on exit
 	with open(DATA_FILE, "wb") as f:
