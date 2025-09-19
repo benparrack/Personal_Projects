@@ -55,11 +55,11 @@ def scrape_occupancy():
 	html = html_bytes.decode("utf-8") # Decode bytes to string
 	results = (re.findall("Current Occupancy: ..", html)) # finds all instances of current occupancy: the two periods can act as any character
 	if results[0][20] == '%': # have to do these if statements because at 0% occupancy there is only 1 int, not two
-		war = 00
+		war = 0 + int(results[0][19])
 	else:
 		war = int(results[0][19] + results[0][20]) # Extract War Memorial occupancy
 	if results[3][20] == '%':
-		mc = 00
+		mc = 0 + int(results[3][19])
 	else:
 		mc = int(results[3][19] + results[3][20]) # Extract McComas occupancy
 	return war, mc # Return both values
