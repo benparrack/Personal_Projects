@@ -37,3 +37,27 @@ input_string = input("Please type in a string: ")
 print(input_string[0])
 print(input_string[1])
 print(input_string[3])
+
+print(input_string[-1]) # -1 index prints the last character, or last thing in the array
+
+input_string = "presumptious"
+
+print(input_string[0:3]) # this is a substring, prints the letters from index 0 to 3, with 0 being included and 3 not
+print(input_string[4:10])
+
+# if the beginning index is left out, it defaults to 0
+print(input_string[:3])
+
+# if the end index is left out, it defaults to the length of the string
+print(input_string[4:])
+
+bool = ("ello" in "Hello") # true, in is a conditional that checks if string a is a substring of b
+
+input_string = "test"
+
+print(input_string.find("t")) # 0   find prints the index of the first character if it is in string, -1 if not
+print(input_string.find("x")) # -1 
+print(input_string.find("es")) # 1
+print(input_string.find("ets")) # -1
+
+

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .calculator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        .display {
+            width: 200px;
+            height: 50px;
+            margin-bottom: 20px;
+            text-align: right;
+            padding: 10px;
+            font-size: 24px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .key {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .key:hover {
+            background-color: #f0f0f0;
+        }
+        .operation {
+            background-color: #f7a500;
+            color: white;
+        }
+        .clear {
+            background-color: #ff5733;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="calculator">
+            <div class="display" id="display">0</div>
+            <div class="keypad">
+                <div class="key" onclick="appendToDisplay('1')">1</div>
+                <div class="key" onclick="appendToDisplay('2')">2</div>
+                <div class="key" onclick="appendToDisplay('3')">3</div>
+                <div class="key operation" onclick="setOperation('+')">+</div>
+                <div class="key" onclick="appendToDisplay('4')">4</div>
+                <div class="key" onclick="appendToDisplay('5')">5</div>
+                <div class="key" onclick="appendToDisplay('6')">6</div>
+                <div class="key operation" onclick="setOperation('-')">-</div>
+                <div class="key" onclick="appendToDisplay('7')">7</div>
+                <div class="key" onclick="appendToDisplay('8')">8</div>
+                <div class="key" onclick="appendToDisplay('9')">9</div>
+                <div class="key operation" onclick="setOperation('*')">*</div>
+                <div class="key" onclick="appendToDisplay('0')">0</div>
+                <div class="key" onclick="appendToDisplay('.')">.</div>
+                <div class="key operation" onclick="calculate()">=</div>
+                <div class="key clear" onclick="clearDisplay()">C</div>
+                <div class="key operation" onclick="setOperation('/')">/</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let display = document.getElementById('display');
+        let currentInput = '';
+        let operator = '';
+        let firstOperand = null;
+
+        function appendToDisplay(value) {
+            if (display.innerText === '0' && value !== '.') {
+                display.innerText = value;
+            } else {
+                display.innerText += value;
+            }
+            currentInput += value;
+        }
+
+        function setOperation(op) {
+            if (currentInput !== '') {
+                if (firstOperand === null) {
+                    firstOperand = parseFloat(currentInput);
+                } else {
+                    calculate();
+                }
+                operator = op;
+                currentInput = '';
+            }
+        }
+
+        function calculate() {
+            let secondOperand = parseFloat(currentInput);
+            let result = 0;
+            switch (operator) {
+                case '+':
+                    result = firstOperand + secondOperand;
+                    break;
+                case '-':
+                    result = firstOperand - secondOperand;
+                    break;
+                case '*':
+                    result = firstOperand * secondOperand;
+                    break;
+                case '/':
+                    result = firstOperand / secondOperand;
+                    break;
+            }
+            display.innerText = result;
+            currentInput = result.toString();
+            firstOperand = null;
+            operator = '';
+        }
+
+        function clearDisplay() {
+            display.innerText = '0';
+            currentInput = '';
+            firstOperand = null;
+            operator = '';
+        }
+    </script>
+</body>
+</html>
